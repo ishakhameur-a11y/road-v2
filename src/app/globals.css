@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+:root {
+  /* Navy Steel — light mode */
+  --bg: #f2f4f6;
+  --bg-elevated: #ffffff;
+  --border: #dde1e6;
+  --text: #101826;
+  --text-muted: #5a6577;
+  --accent: #1e4d6b;
+  --danger: #b3403f;
+}
+
+.dark {
+  /* Navy Steel — dark mode */
+  --bg: #0a1018;
+  --bg-elevated: #131b28;
+  --border: #1f2a3a;
+  --text: #e8edf3;
+  --text-muted: #7c8ba0;
+  --accent: #4a8bb5;
+  --danger: #d9756a;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+}
+
+:root,
+.dark {
+  --accent-soft: color-mix(in srgb, var(--accent) 14%, var(--bg-elevated));
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  transition: background-color 0.25s ease;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  min-height: 100dvh;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
