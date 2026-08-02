@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, ChevronRight, ChevronLeft } from "lucide-react";
+import { Plus, ChevronRight, ChevronLeft, CalendarDays } from "lucide-react";
 import { useLocalStorage } from "@/lib/useLocalStorage";
 import {
   TaskEvent,
@@ -49,6 +49,7 @@ export default function TasksPage() {
   const [sessions] = useSessions();
   const [selected, setSelected] = useState(new Date());
   const [view, setView] = useState<ViewMode>("week");
+  const [viewMenuOpen, setViewMenuOpen] = useState(false);
   const [monthAnchor, setMonthAnchor] = useState(() => {
     const d = new Date();
     return { y: d.getFullYear(), m: d.getMonth() };
@@ -107,13 +108,54 @@ export default function TasksPage() {
         className="z-20 border-b px-4 pb-3 pt-4 backdrop-blur-md"
         style={{ borderColor: "var(--border)", backgroundColor: "color-mix(in srgb, var(--bg) 92%, transparent)" }}
       >
-        <div className="mb-3 flex items-center justify-between">
+        <div className="relative mb-1 flex items-center justify-center">
+          {/* View switcher - top left */}
+          <div className="absolute left-0 top-1/2 -translate-y-1/2">
+            <button
+              onClick={() => setViewMenuOpen((o) => !o)}
+              className="flex h-9 w-9 items-center justify-center rounded-xl border"
+              style={{ borderColor: "var(--border)", backgroundColor: "var(--bg-elevated)" }}
+            >
+              <CalendarDays size={18} color="var(--accent)" />
+            </button>
+            {viewMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setViewMenuOpen(false)} />
+                <div
+                  className="absolute top-11 left-0 z-40 w-28 overflow-hidden rounded-xl border"
+                  style={{ borderColor: "var(--border)", backgroundColor: "var(--bg-elevated)", boxShadow: "0 8px 24px rgba(0,0,0,0.25)" }}
+                >
+                  {(
+                    [
+                      { id: "day" as const, label: "يوم" },
+                      { id: "week" as const, label: "أسبوع" },
+                      { id: "month" as const, label: "شهر" },
+                    ]
+                  ).map((v) => (
+                    <button
+                      key={v.id}
+                      onClick={() => {
+                        setView(v.id);
+                        setViewMenuOpen(false);
+                      }}
+                      className="block w-full px-4 py-2.5 text-start text-sm font-semibold"
+                      style={{
+                        backgroundColor: view === v.id ? "color-mix(in srgb, var(--accent) 12%, transparent)" : "transparent",
+                        color: view === v.id ? "var(--accent)" : "var(--text)",
+                      }}
+                    >
+                      {v.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Center: date nav or month title */}
           {view !== "month" ? (
-            <>
-              <button
-                onClick={() => setSelected((d) => addDays(d, view === "week" ? -7 : -1))}
-                className="p-1"
-              >
+            <div className="flex items-center gap-3">
+              <button onClick={() => setSelected((d) => addDays(d, view === "week" ? -7 : -1))} className="p-1">
                 <ChevronRight size={20} color="var(--text-muted)" />
               </button>
               <div className="text-center">
@@ -126,41 +168,26 @@ export default function TasksPage() {
                     : fullDate(selected)}
                 </p>
               </div>
-              <button
-                onClick={() => setSelected((d) => addDays(d, view === "week" ? 7 : 1))}
-                className="p-1"
-              >
+              <button onClick={() => setSelected((d) => addDays(d, view === "week" ? 7 : 1))} className="p-1">
                 <ChevronLeft size={20} color="var(--text-muted)" />
               </button>
-            </>
+            </div>
           ) : (
-            <h1 className="w-full text-center text-[15px] font-bold">عرض الشهر</h1>
+            <h1 className="text-[15px] font-bold">عرض الشهر</h1>
           )}
-        </div>
 
-        {/* View toggle */}
-        <div className="mb-3 flex rounded-xl p-1" style={{ backgroundColor: "var(--bg-elevated)" }}>
-          {(
-            [
-              { id: "day" as const, label: "يوم" },
-              { id: "week" as const, label: "أسبوع" },
-              { id: "month" as const, label: "شهر" },
-            ]
-          ).map((v) => (
-            <button
-              key={v.id}
-              onClick={() => setView(v.id)}
-              className="flex-1 rounded-lg py-1.5 text-xs font-semibold"
-              style={{
-                backgroundColor: view === v.id ? "var(--accent)" : "transparent",
-                color: view === v.id ? "#fff" : "var(--text-muted)",
-              }}
-            >
-              {v.label}
-            </button>
-          ))}
+          {/* Add button - top right */}
+          <button
+            onClick={() => setAddSheet({ start: Math.min((today.getHours() + 1) * 60, 22 * 60) })}
+            className="absolute right-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-white"
+            style={{
+              backgroundColor: "var(--accent)",
+              boxShadow: "0 4px 12px color-mix(in srgb, var(--accent) 35%, transparent)",
+            }}
+          >
+            <Plus size={20} />
+          </button>
         </div>
-
       </header>
 
       {/* Timeline / Month */}
@@ -298,15 +325,6 @@ export default function TasksPage() {
           <div style={{ height: 40 }} />
         </div>
       )}
-
-      {/* Add button */}
-      <button
-        onClick={() => setAddSheet({ start: Math.min((today.getHours() + 1) * 60, 22 * 60) })}
-        className="absolute bottom-5 left-5 z-20 flex h-14 w-14 items-center justify-center rounded-2xl text-white"
-        style={{ backgroundColor: "var(--accent)", boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}
-      >
-        <Plus size={24} />
-      </button>
 
       {/* Sheets */}
       <AnimatePresence>
