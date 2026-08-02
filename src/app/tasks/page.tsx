@@ -19,7 +19,7 @@ import MonthView from "@/components/MonthView";
 
 type ViewMode = "day" | "week" | "month";
 
-const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+const MONTHS = ["جانفي", "فيفري", "مارس", "أفريل", "ماي", "جوان", "جويلية", "أوت", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
 const DAYS_SHORT = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
 
 function toKey(d: Date) {
@@ -48,7 +48,7 @@ export default function TasksPage() {
   const [events, setEvents] = useLocalStorage<TaskEvent[]>("road_events", seedTasks());
   const [sessions] = useSessions();
   const [selected, setSelected] = useState(new Date());
-  const [view, setView] = useState<ViewMode>("day");
+  const [view, setView] = useState<ViewMode>("week");
   const [monthAnchor, setMonthAnchor] = useState(() => {
     const d = new Date();
     return { y: d.getFullYear(), m: d.getMonth() };
@@ -173,7 +173,6 @@ export default function TasksPage() {
                   className="flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold"
                   style={{ backgroundColor: `${s.color}18`, color: s.color }}
                 >
-                  <span>{s.emoji}</span>
                   {s.label}
                   {count > 0 && <span style={{ opacity: 0.7 }}>({count})</span>}
                 </button>
@@ -211,8 +210,8 @@ export default function TasksPage() {
                     onClick={() => setSelected(d)}
                     className="flex flex-1 flex-col items-center gap-0.5 py-1.5"
                   >
-                    <span className="text-[8px]" style={{ color: "var(--text-muted)" }}>
-                      {DAYS_SHORT[d.getDay()].slice(0, 2)}
+                    <span className="whitespace-nowrap text-[8px]" style={{ color: "var(--text-muted)" }}>
+                      {DAYS_SHORT[d.getDay()]}
                     </span>
                     <span
                       className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold"
@@ -279,25 +278,7 @@ export default function TasksPage() {
                     );
                   })}
 
-                  {/* Session labels (day view only) */}
-                  {view === "day" &&
-                    sessions.map((s) => (
-                      <div
-                        key={s.id}
-                        style={{
-                          position: "absolute",
-                          insetInlineStart: 8,
-                          top: (s.start / 60) * HOUR + 4,
-                          fontSize: 9,
-                          fontWeight: 700,
-                          color: s.color,
-                          zIndex: 3,
-                          pointerEvents: "none",
-                        }}
-                      >
-                        {s.emoji} {s.label}
-                      </div>
-                    ))}
+                  {/* Session color bands only (no label) — the tint difference is enough */}
 
                   {/* Current time indicator */}
                   {isDayToday && (
