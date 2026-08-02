@@ -3,7 +3,7 @@
 import { Pencil, Trash2, Copy, Check } from "lucide-react";
 import Sheet from "./Sheet";
 import { TaskEvent, TaskStatus, STATUS_COLOR } from "@/lib/tasks";
-import { Session, getSessionFor } from "@/lib/sessions";
+import { Session } from "@/lib/sessions";
 
 function mtl(mins: number): string {
   const h = Math.floor(mins / 60);
@@ -35,8 +35,6 @@ export default function TaskActionSheet({
   onCopyTomorrow: () => void;
   onDelete: () => void;
 }) {
-  const session = getSessionFor(event.start, sessions);
-
   return (
     <Sheet onClose={onClose}>
       <div className="mb-5 flex items-center gap-3">
@@ -48,18 +46,10 @@ export default function TaskActionSheet({
           <p className="truncate text-[15px] font-bold">{event.title}</p>
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
             {mtl(event.start)} – {mtl(event.end)}
-            {session && (
-              <span className="mr-2" style={{ color: session.color }}>
-                {session.emoji} {session.label}
-              </span>
-            )}
           </p>
         </div>
       </div>
 
-      <p className="mb-2.5 text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
-        غيّر الحالة
-      </p>
       <div className="mb-5 flex justify-center gap-4">
         {STATUS_OPTIONS.map((o) => {
           const isCurrent = event.status === o.s;

@@ -161,25 +161,6 @@ export default function TasksPage() {
           ))}
         </div>
 
-        {/* Session jump chips */}
-        {view !== "month" && (
-          <div className="flex gap-2">
-            {sessions.map((s) => {
-              const count = dayEvents.filter((e) => e.start >= s.start && e.start < s.end).length;
-              return (
-                <button
-                  key={s.id}
-                  onClick={() => jumpToSession(s.start)}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold"
-                  style={{ backgroundColor: `${s.color}18`, color: s.color }}
-                >
-                  {s.label}
-                  {count > 0 && <span style={{ opacity: 0.7 }}>({count})</span>}
-                </button>
-              );
-            })}
-          </div>
-        )}
       </header>
 
       {/* Timeline / Month */}

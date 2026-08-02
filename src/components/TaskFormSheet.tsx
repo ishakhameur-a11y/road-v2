@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Sheet from "./Sheet";
-import { Session, getSessionFor } from "@/lib/sessions";
+import { Session } from "@/lib/sessions";
 
 const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => i * 30);
 
@@ -18,8 +18,6 @@ export default function TaskFormSheet({
   initialTitle = "",
   initialStart,
   initialEnd,
-  dateLabel,
-  sessions,
   onClose,
   onSave,
   saveLabel,
@@ -38,18 +36,10 @@ export default function TaskFormSheet({
   const [start, setStart] = useState(initialStart);
   const [end, setEnd] = useState(initialEnd ?? Math.min(initialStart + 60, 23 * 60 + 30));
 
-  const session = getSessionFor(start, sessions);
-
   return (
     <Sheet onClose={onClose}>
-      <h2 className="mb-1 text-center text-base font-bold">{sheetTitle}</h2>
-      <p className="mb-4 text-center text-xs" style={{ color: "var(--text-muted)" }}>
-        📅 {dateLabel}
-      </p>
+      <h2 className="mb-5 text-center text-base font-bold">{sheetTitle}</h2>
 
-      <p className="mb-1.5 text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
-        عنوان المهمة
-      </p>
       <input
         autoFocus
         value={name}
@@ -59,60 +49,36 @@ export default function TaskFormSheet({
         style={{ borderColor: "var(--border)", backgroundColor: "var(--bg)", color: "var(--text)" }}
       />
 
-      <div className="mb-3 grid grid-cols-2 gap-3">
-        <div>
-          <p className="mb-1.5 text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
-            وقت البدء
-          </p>
-          <select
-            value={start}
-            onChange={(e) => {
-              const v = Number(e.target.value);
-              setStart(v);
-              if (end <= v) setEnd(Math.min(v + 60, 23 * 60 + 30));
-            }}
-            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none"
-            style={{ borderColor: "var(--border)", backgroundColor: "var(--bg)", color: "var(--text)" }}
-          >
-            {TIME_OPTIONS.map((x) => (
-              <option key={x} value={x}>
-                {mtl(x)}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <p className="mb-1.5 text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
-            وقت الانتهاء
-          </p>
-          <select
-            value={end}
-            onChange={(e) => setEnd(Number(e.target.value))}
-            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none"
-            style={{ borderColor: "var(--border)", backgroundColor: "var(--bg)", color: "var(--text)" }}
-          >
-            {TIME_OPTIONS.filter((x) => x > start).map((x) => (
-              <option key={x} value={x}>
-                {mtl(x)}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {session ? (
-        <div
-          className="mb-5 flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold"
-          style={{ backgroundColor: `${session.color}18`, color: session.color }}
+      <div className="mb-5 grid grid-cols-2 gap-3">
+        <select
+          value={start}
+          onChange={(e) => {
+            const v = Number(e.target.value);
+            setStart(v);
+            if (end <= v) setEnd(Math.min(v + 60, 23 * 60 + 30));
+          }}
+          className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none"
+          style={{ borderColor: "var(--border)", backgroundColor: "var(--bg)", color: "var(--text)" }}
         >
-          <span>{session.emoji}</span>
-          <span>هذي المهمة بتنحط بسشن {session.label}</span>
-        </div>
-      ) : (
-        <div className="mb-5 rounded-xl px-3 py-2 text-xs" style={{ backgroundColor: "var(--bg)", color: "var(--text-muted)" }}>
-          هذا الوقت خارج أوقات السشنز الثلاثة
-        </div>
-      )}
+          {TIME_OPTIONS.map((x) => (
+            <option key={x} value={x}>
+              {mtl(x)}
+            </option>
+          ))}
+        </select>
+        <select
+          value={end}
+          onChange={(e) => setEnd(Number(e.target.value))}
+          className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none"
+          style={{ borderColor: "var(--border)", backgroundColor: "var(--bg)", color: "var(--text)" }}
+        >
+          {TIME_OPTIONS.filter((x) => x > start).map((x) => (
+            <option key={x} value={x}>
+              {mtl(x)}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <button
         onClick={() => name.trim() && end > start && onSave(name.trim(), start, end)}
