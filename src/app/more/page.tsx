@@ -5,9 +5,11 @@ import { Flame, CheckCircle2, Download, Upload, Sun, Moon, Clock } from "lucide-
 import { useLocalStorage } from "@/lib/useLocalStorage";
 import { useTheme } from "@/lib/theme-context";
 import { TaskEvent, seedTasks } from "@/lib/tasks";
-import { useSessions, Session } from "@/lib/sessions";
+import { useSessions, Session, SESSION_COLOR_PRESETS } from "@/lib/sessions";
+import { FinanceTx, seedFinanceTxs } from "@/lib/finance";
 
 const DAYS_SHORT = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
+const MONTHS = ["جانفي", "فيفري", "مارس", "أفريل", "ماي", "جوان", "جويلية", "أوت", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
 
 function toKey(d: Date) {
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
@@ -35,6 +37,7 @@ const BACKUP_KEYS = ["road_events", "road_finance_txs", "road_theme", "road_sess
 export default function MorePage() {
   const { theme, toggleTheme } = useTheme();
   const [events] = useLocalStorage<TaskEvent[]>("road_events", seedTasks());
+  const [txs] = useLocalStorage<FinanceTx[]>("road_finance_txs", seedFinanceTxs());
   const [sessions, setSessions] = useSessions();
   const [toast, setToast] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -58,6 +61,32 @@ export default function MorePage() {
     });
   }, [events]);
   const avg = Math.round(weekly.reduce((s, v) => s + v.pct, 0) / 7);
+
+  const financeTrend = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 6 }, (_, i) => {
+      let m = now.getMonth() - 5 + i;
+      let y = now.getFullYear();
+      if (m < 0) {
+        m += 12;
+        y--;
+      }
+      const monthTxs = txs.filter((tx) => {
+        const d = new Date(tx.date);
+        return d.getFullYear() === y && d.getMonth() === m;
+      });
+      const income = monthTxs.filter((tx) => tx.type === "income").reduce((s, tx) => s + tx.amount, 0);
+      const expense = monthTxs
+        .filter((tx) => tx.type === "expense")
+        .reduce((s, tx) => s + tx.amount, 0);
+      return { label: MONTHS[m].slice(0, 3), income, expense };
+    });
+  }, [txs]);
+  const maxFinance = Math.max(...financeTrend.map((d) => Math.max(d.income, d.expense)), 1);
+
+  function updateSessionColor(id: Session["id"], color: string) {
+    setSessions((prev) => prev.map((s) => (s.id === id ? { ...s, color } : s)));
+  }
 
   function updateSession(id: Session["id"], field: "start" | "end", value: number) {
     setSessions((prev) => prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
@@ -163,6 +192,54 @@ export default function MorePage() {
         </div>
       </div>
 
+      {/* Finance trend chart */}
+      <div
+        className="mb-5 rounded-2xl border p-4"
+        style={{ backgroundColor: "var(--bg-elevated)", borderColor: "var(--border)" }}
+      >
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-sm font-bold">الدخل والمصروف — آخر 6 أشهر</p>
+          <div className="flex gap-3">
+            <span className="text-[9px] font-semibold" style={{ color: "#1f9d6b" }}>
+              ● دخل
+            </span>
+            <span className="text-[9px] font-semibold" style={{ color: "#c1504c" }}>
+              ● مصروف
+            </span>
+          </div>
+        </div>
+        <div className="flex items-end gap-2" style={{ height: 96, direction: "ltr" }}>
+          {financeTrend.map((d, i) => (
+            <div key={i} className="flex flex-1 flex-col items-center gap-1.5">
+              <div className="flex h-16 w-full items-end gap-1">
+                <div
+                  className="flex-1 rounded-t-md"
+                  style={{
+                    height: `${Math.max((d.income / maxFinance) * 100, d.income > 0 ? 4 : 1)}%`,
+                    backgroundColor: "#1f9d6b",
+                    opacity: i === 5 ? 1 : 0.5,
+                  }}
+                />
+                <div
+                  className="flex-1 rounded-t-md"
+                  style={{
+                    height: `${Math.max((d.expense / maxFinance) * 100, d.expense > 0 ? 4 : 1)}%`,
+                    backgroundColor: "#c1504c",
+                    opacity: i === 5 ? 1 : 0.5,
+                  }}
+                />
+              </div>
+              <span
+                className="text-[9px]"
+                style={{ color: i === 5 ? "var(--text)" : "var(--text-muted)", fontWeight: i === 5 ? 700 : 500 }}
+              >
+                {d.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Appearance */}
       <div
         className="mb-5 flex items-center justify-between rounded-2xl border p-4"
@@ -211,9 +288,9 @@ export default function MorePage() {
           {sessions.map((s) => (
             <div key={s.id} className="rounded-xl p-3" style={{ backgroundColor: `${s.color}12` }}>
               <p className="mb-2 text-xs font-bold" style={{ color: s.color }}>
-                {s.emoji} {s.label}
+                {s.label}
               </p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="mb-2.5 grid grid-cols-2 gap-2">
                 <select
                   value={s.start}
                   onChange={(e) => updateSession(s.id, "start", Number(e.target.value))}
@@ -238,6 +315,19 @@ export default function MorePage() {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div className="flex gap-2">
+                {SESSION_COLOR_PRESETS.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => updateSessionColor(s.id, c)}
+                    className="h-6 w-6 flex-shrink-0 rounded-full"
+                    style={{
+                      backgroundColor: c,
+                      boxShadow: s.color === c ? "0 0 0 2px var(--bg-elevated), 0 0 0 3.5px " + c : "none",
+                    }}
+                  />
+                ))}
               </div>
             </div>
           ))}

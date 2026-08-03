@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { useLocalStorage } from "@/lib/useLocalStorage";
 import { TaskEvent, seedTasks } from "@/lib/tasks";
 import { useSessions } from "@/lib/sessions";
@@ -20,11 +21,17 @@ function mtl(mins: number): string {
   return `${String(hh).padStart(2, "0")}:${String(m).padStart(2, "0")} ${h < 12 ? "ص" : "م"}`;
 }
 
+const RING_SIZE = 56;
+const STROKE = 6;
+const RADIUS = (RING_SIZE - STROKE) / 2;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+
 export default function HomePage() {
   const router = useRouter();
   const [events, setEvents] = useLocalStorage<TaskEvent[]>("road_events", seedTasks());
   const [sessions] = useSessions();
   const [txs] = useLocalStorage<FinanceTx[]>("road_finance_txs", seedFinanceTxs());
+  const [tasksOpen, setTasksOpen] = useState(false);
 
   const todayEvents = events.filter((e) => e.dateKey === todayKey());
   const state = computeState(txs);
@@ -37,107 +44,42 @@ export default function HomePage() {
 
   const totalToday = todayEvents.length;
   const doneToday = todayEvents.filter((e) => e.status === "done").length;
+  const pct = totalToday > 0 ? Math.round((doneToday / totalToday) * 100) : 0;
+  const offset = CIRCUMFERENCE - (pct / 100) * CIRCUMFERENCE;
 
   return (
     <div className="px-5 pt-6">
+      {/* Logo header */}
       <header className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold">الرئيسية</h1>
-          {totalToday > 0 && (
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              {doneToday} من {totalToday} منجزة اليوم
-            </p>
-          )}
+        <div className="flex items-center gap-2.5">
+          <div
+            className="flex h-[38px] w-[38px] items-center justify-center rounded-full border"
+            style={{
+              backgroundColor: "color-mix(in srgb, var(--accent) 14%, transparent)",
+              borderColor: "color-mix(in srgb, var(--accent) 35%, transparent)",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "Georgia, 'Times New Roman', serif",
+                fontStyle: "italic",
+                fontWeight: 700,
+                fontSize: 19,
+                color: "var(--accent)",
+              }}
+            >
+              R
+            </span>
+          </div>
+          <span className="text-lg font-extrabold tracking-tight">Road</span>
         </div>
         <ThemeToggle />
       </header>
 
-      {/* Sessions */}
-      <div className="mb-5 flex flex-col gap-5">
-        {sessions.map((s) => {
-          const sessionEvents = todayEvents
-            .filter((e) => e.start >= s.start && e.start < s.end)
-            .sort((a, b) => a.start - b.start);
-          if (sessionEvents.length === 0) return null;
-
-          return (
-            <div key={s.id}>
-              <div className="mb-2.5 flex items-center gap-2">
-                <span className="text-base">{s.emoji}</span>
-                <span className="text-sm font-bold" style={{ color: s.color }}>
-                  {s.label}
-                </span>
-              </div>
-              <div className="flex flex-col gap-2">
-                <AnimatePresence initial={false}>
-                  {sessionEvents.map((e) => {
-                    const done = e.status === "done";
-                    return (
-                      <motion.button
-                        key={e.id}
-                        layout
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        onClick={() => router.push("/tasks")}
-                        className="flex w-full items-center gap-3 rounded-2xl border px-3.5 py-3 text-right"
-                        style={{
-                          backgroundColor: "var(--bg-elevated)",
-                          borderColor: "var(--border)",
-                          opacity: done ? 0.6 : 1,
-                        }}
-                      >
-                        <span
-                          onClick={(ev) => {
-                            ev.stopPropagation();
-                            toggleDone(e.id);
-                          }}
-                          className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors"
-                          style={{
-                            borderColor: done ? "#1f9d6b" : "var(--border)",
-                            backgroundColor: done ? "#1f9d6b" : "transparent",
-                          }}
-                        >
-                          {done && <Check size={15} color="#fff" strokeWidth={3} />}
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span
-                            className="block truncate text-[13.5px] font-semibold"
-                            style={{
-                              textDecoration: done ? "line-through" : "none",
-                              color: done ? "var(--text-muted)" : "var(--text)",
-                            }}
-                          >
-                            {e.title}
-                          </span>
-                          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                            {mtl(e.start)} – {mtl(e.end)}
-                          </span>
-                        </span>
-                      </motion.button>
-                    );
-                  })}
-                </AnimatePresence>
-              </div>
-            </div>
-          );
-        })}
-
-        {totalToday === 0 && (
-          <div
-            className="rounded-2xl border px-5 py-8 text-center"
-            style={{ borderColor: "var(--border)", backgroundColor: "var(--bg-elevated)" }}
-          >
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-              لا توجد مهام اليوم
-            </p>
-          </div>
-        )}
-      </div>
-
       {/* Finance summary */}
       <button
         onClick={() => router.push("/finance")}
-        className="mb-6 w-full rounded-2xl border px-5 py-4 text-right"
+        className="mb-4 w-full rounded-2xl border px-5 py-4 text-right"
         style={{ backgroundColor: "var(--bg-elevated)", borderColor: "var(--border)" }}
       >
         <p className="mb-1 text-xs font-medium" style={{ color: "var(--text-muted)" }}>
@@ -150,6 +92,138 @@ export default function HomePage() {
           {Math.round(state.spendPool).toLocaleString()} د.ج
         </p>
       </button>
+
+      {/* Tasks collapsible card */}
+      <div
+        className="mb-6 overflow-hidden rounded-2xl border"
+        style={{ backgroundColor: "var(--bg-elevated)", borderColor: "var(--border)" }}
+      >
+        <button
+          onClick={() => setTasksOpen((o) => !o)}
+          className="flex w-full items-center gap-4 px-4 py-4"
+        >
+          <div className="relative flex h-14 w-14 flex-shrink-0 items-center justify-center">
+            <svg width={RING_SIZE} height={RING_SIZE} style={{ transform: "rotate(-90deg)" }}>
+              <circle
+                cx={RING_SIZE / 2}
+                cy={RING_SIZE / 2}
+                r={RADIUS}
+                stroke="var(--border)"
+                strokeWidth={STROKE}
+                fill="none"
+              />
+              <motion.circle
+                cx={RING_SIZE / 2}
+                cy={RING_SIZE / 2}
+                r={RADIUS}
+                stroke="var(--accent)"
+                strokeWidth={STROKE}
+                fill="none"
+                strokeDasharray={CIRCUMFERENCE}
+                strokeLinecap="round"
+                initial={false}
+                animate={{ strokeDashoffset: offset }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              />
+            </svg>
+            <span className="absolute text-[13px] font-extrabold">{pct}%</span>
+          </div>
+
+          <div className="flex-1 text-right">
+            <p className="text-sm font-bold">مهام اليوم</p>
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              {totalToday > 0 ? `${doneToday} من ${totalToday} منجزة` : "لا توجد مهام اليوم"}
+            </p>
+          </div>
+
+          <motion.div animate={{ rotate: tasksOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+            <ChevronDown size={18} color="var(--text-muted)" />
+          </motion.div>
+        </button>
+
+        <AnimatePresence initial={false}>
+          {tasksOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              style={{ overflow: "hidden" }}
+            >
+              <div
+                className="flex flex-col gap-5 border-t px-4 pb-4 pt-4"
+                style={{ borderColor: "var(--border)" }}
+              >
+                {totalToday === 0 ? (
+                  <p className="py-2 text-center text-sm" style={{ color: "var(--text-muted)" }}>
+                    لا توجد مهام اليوم
+                  </p>
+                ) : (
+                  sessions.map((s) => {
+                    const sessionEvents = todayEvents
+                      .filter((e) => e.start >= s.start && e.start < s.end)
+                      .sort((a, b) => a.start - b.start);
+                    if (sessionEvents.length === 0) return null;
+
+                    return (
+                      <div key={s.id}>
+                        <div className="mb-2 text-xs font-bold" style={{ color: s.color }}>
+                          {s.label}
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          {sessionEvents.map((e) => {
+                            const done = e.status === "done";
+                            return (
+                              <button
+                                key={e.id}
+                                onClick={() => router.push("/tasks")}
+                                className="flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-right"
+                                style={{
+                                  backgroundColor: "var(--bg)",
+                                  borderColor: "var(--border)",
+                                  opacity: done ? 0.6 : 1,
+                                }}
+                              >
+                                <span
+                                  onClick={(ev) => {
+                                    ev.stopPropagation();
+                                    toggleDone(e.id);
+                                  }}
+                                  className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors"
+                                  style={{
+                                    borderColor: done ? "#1f9d6b" : "var(--border)",
+                                    backgroundColor: done ? "#1f9d6b" : "transparent",
+                                  }}
+                                >
+                                  {done && <Check size={13} color="#fff" strokeWidth={3} />}
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                  <span
+                                    className="block truncate text-[13px] font-semibold"
+                                    style={{
+                                      textDecoration: done ? "line-through" : "none",
+                                      color: done ? "var(--text-muted)" : "var(--text)",
+                                    }}
+                                  >
+                                    {e.title}
+                                  </span>
+                                  <span className="text-[10.5px]" style={{ color: "var(--text-muted)" }}>
+                                    {mtl(e.start)} – {mtl(e.end)}
+                                  </span>
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
