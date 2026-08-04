@@ -5,7 +5,7 @@ import { Flame, CheckCircle2, Download, Upload, Sun, Moon, Clock } from "lucide-
 import { useLocalStorage } from "@/lib/useLocalStorage";
 import { useTheme } from "@/lib/theme-context";
 import { TaskEvent, seedTasks } from "@/lib/tasks";
-import { useSessions, Session, SESSION_COLOR_PRESETS } from "@/lib/sessions";
+import { useSessions, Session, SESSION_COLOR_PRESETS, SESSION_LABELS } from "@/lib/sessions";
 import { FinanceTx, seedFinanceTxs } from "@/lib/finance";
 
 const DAYS_SHORT = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
@@ -79,7 +79,7 @@ export default function MorePage() {
       const expense = monthTxs
         .filter((tx) => tx.type === "expense")
         .reduce((s, tx) => s + tx.amount, 0);
-      return { label: MONTHS[m].slice(0, 3), income, expense };
+      return { label: MONTHS[m], income, expense };
     });
   }, [txs]);
   const maxFinance = Math.max(...financeTrend.map((d) => Math.max(d.income, d.expense)), 1);
@@ -288,7 +288,7 @@ export default function MorePage() {
           {sessions.map((s) => (
             <div key={s.id} className="rounded-xl p-3" style={{ backgroundColor: `${s.color}12` }}>
               <p className="mb-2 text-xs font-bold" style={{ color: s.color }}>
-                {s.label}
+                {SESSION_LABELS[s.id]}
               </p>
               <div className="mb-2.5 grid grid-cols-2 gap-2">
                 <select

@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, ChevronDown } from "lucide-react";
 import { useLocalStorage } from "@/lib/useLocalStorage";
 import { TaskEvent, seedTasks } from "@/lib/tasks";
-import { useSessions } from "@/lib/sessions";
 import { FinanceTx, computeState, seedFinanceTxs } from "@/lib/finance";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -29,7 +28,6 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 export default function HomePage() {
   const router = useRouter();
   const [events, setEvents] = useLocalStorage<TaskEvent[]>("road_events", seedTasks());
-  const [sessions] = useSessions();
   const [txs] = useLocalStorage<FinanceTx[]>("road_finance_txs", seedFinanceTxs());
   const [tasksOpen, setTasksOpen] = useState(false);
 
@@ -159,65 +157,51 @@ export default function HomePage() {
                     لا توجد مهام اليوم
                   </p>
                 ) : (
-                  sessions.map((s) => {
-                    const sessionEvents = todayEvents
-                      .filter((e) => e.start >= s.start && e.start < s.end)
-                      .sort((a, b) => a.start - b.start);
-                    if (sessionEvents.length === 0) return null;
-
-                    return (
-                      <div key={s.id}>
-                        <div className="mb-2 text-xs font-bold" style={{ color: s.color }}>
-                          {s.label}
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          {sessionEvents.map((e) => {
-                            const done = e.status === "done";
-                            return (
-                              <button
-                                key={e.id}
-                                onClick={() => router.push("/tasks")}
-                                className="flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-right"
-                                style={{
-                                  backgroundColor: "var(--bg)",
-                                  borderColor: "var(--border)",
-                                  opacity: done ? 0.6 : 1,
-                                }}
-                              >
-                                <span
-                                  onClick={(ev) => {
-                                    ev.stopPropagation();
-                                    toggleDone(e.id);
-                                  }}
-                                  className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors"
-                                  style={{
-                                    borderColor: done ? "#1f9d6b" : "var(--border)",
-                                    backgroundColor: done ? "#1f9d6b" : "transparent",
-                                  }}
-                                >
-                                  {done && <Check size={13} color="#fff" strokeWidth={3} />}
-                                </span>
-                                <span className="min-w-0 flex-1">
-                                  <span
-                                    className="block truncate text-[13px] font-semibold"
-                                    style={{
-                                      textDecoration: done ? "line-through" : "none",
-                                      color: done ? "var(--text-muted)" : "var(--text)",
-                                    }}
-                                  >
-                                    {e.title}
-                                  </span>
-                                  <span className="text-[10.5px]" style={{ color: "var(--text-muted)" }}>
-                                    {mtl(e.start)} – {mtl(e.end)}
-                                  </span>
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })
+                  [...todayEvents]
+                    .sort((a, b) => a.start - b.start)
+                    .map((e) => {
+                      const done = e.status === "done";
+                      return (
+                        <button
+                          key={e.id}
+                          onClick={() => router.push("/tasks")}
+                          className="flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-right"
+                          style={{
+                            backgroundColor: "var(--bg)",
+                            borderColor: "var(--border)",
+                            opacity: done ? 0.6 : 1,
+                          }}
+                        >
+                          <span
+                            onClick={(ev) => {
+                              ev.stopPropagation();
+                              toggleDone(e.id);
+                            }}
+                            className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors"
+                            style={{
+                              borderColor: done ? "#1f9d6b" : "var(--border)",
+                              backgroundColor: done ? "#1f9d6b" : "transparent",
+                            }}
+                          >
+                            {done && <Check size={13} color="#fff" strokeWidth={3} />}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span
+                              className="block truncate text-[13px] font-semibold"
+                              style={{
+                                textDecoration: done ? "line-through" : "none",
+                                color: done ? "var(--text-muted)" : "var(--text)",
+                              }}
+                            >
+                              {e.title}
+                            </span>
+                            <span className="text-[10.5px]" style={{ color: "var(--text-muted)" }}>
+                              {mtl(e.start)} – {mtl(e.end)}
+                            </span>
+                          </span>
+                        </button>
+                      );
+                    })
                 )}
               </div>
             </motion.div>

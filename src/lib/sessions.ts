@@ -17,6 +17,12 @@ export const DEFAULT_SESSIONS: Session[] = [
   { id: "evening", label: "سشن 3", emoji: "🌙", start: 18 * 60, end: 22 * 60, color: "#6b5fb5" },
 ];
 
+export const SESSION_LABELS: Record<Session["id"], string> = {
+  morning: "سشن 1",
+  afternoon: "سشن 2",
+  evening: "سشن 3",
+};
+
 export const SESSION_COLOR_PRESETS = [
   "#c98a3a", // amber
   "#2f8f8f", // teal
