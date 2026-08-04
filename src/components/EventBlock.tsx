@@ -3,13 +3,6 @@
 import { TaskEvent, STATUS_COLOR } from "@/lib/tasks";
 import { Session, getSessionFor } from "@/lib/sessions";
 
-function mtl(mins: number): string {
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  const hh = h % 12 === 0 ? 12 : h % 12;
-  return `${String(hh).padStart(2, "0")}:${String(m).padStart(2, "0")} ${h < 12 ? "ص" : "م"}`;
-}
-
 export default function EventBlock({
   event: e,
   sessions,
@@ -66,11 +59,6 @@ export default function EventBlock({
         >
           {e.title}
         </span>
-        {height > 34 && (
-          <span style={{ display: "block", fontSize: 9, color: "rgba(255,255,255,0.85)", fontWeight: 500 }}>
-            {mtl(e.start)} – {mtl(e.end)}
-          </span>
-        )}
       </div>
     </button>
   );

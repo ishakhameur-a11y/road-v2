@@ -301,8 +301,24 @@ export default function TasksPage() {
                         pointerEvents: "none",
                       }}
                     >
-                      <span style={{ height: 8, width: 8, borderRadius: "50%", background: "var(--accent)", marginInlineStart: -3 }} />
-                      <span style={{ height: 1.5, flex: 1, background: "var(--accent)" }} />
+                      <span
+                        style={{
+                          height: 8,
+                          width: 8,
+                          borderRadius: "50%",
+                          background: "rgba(235,235,235,0.9)",
+                          boxShadow: "0 0 4px rgba(0,0,0,0.35)",
+                          marginInlineStart: -3,
+                        }}
+                      />
+                      <span
+                        style={{
+                          height: 1.5,
+                          flex: 1,
+                          background: "rgba(235,235,235,0.9)",
+                          boxShadow: "0 0 3px rgba(0,0,0,0.35)",
+                        }}
+                      />
                     </div>
                   )}
 

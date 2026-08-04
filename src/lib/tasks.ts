@@ -38,9 +38,26 @@ export interface PlacedEvent {
 }
 
 export function layoutDay(events: TaskEvent[]): PlacedEvent[] {
-  const sorted = [...events].sort((a, b) => a.start - b.start || b.end - a.end);
-  const colEnds: number[] = [];
-  const placed = sorted.map((e) => {
+  const sorted = [...events].sort((a, b) => a.start - b.start || a.end - b.end);
+  const result: PlacedEvent[] = [];
+
+  let cluster: { event: TaskEvent; col: number }[] = [];
+  let colEnds: number[] = [];
+  let clusterEnd = -Infinity;
+
+  function flushCluster() {
+    if (cluster.length === 0) return;
+    const total = colEnds.length;
+    cluster.forEach((item) => result.push({ ...item, total }));
+    cluster = [];
+    colEnds = [];
+  }
+
+  for (const e of sorted) {
+    if (cluster.length > 0 && e.start >= clusterEnd) {
+      flushCluster();
+      clusterEnd = -Infinity;
+    }
     let col = colEnds.findIndex((end) => end <= e.start);
     if (col === -1) {
       col = colEnds.length;
@@ -48,9 +65,12 @@ export function layoutDay(events: TaskEvent[]): PlacedEvent[] {
     } else {
       colEnds[col] = e.end;
     }
-    return { event: e, col };
-  });
-  return placed.map((p) => ({ ...p, total: colEnds.length }));
+    cluster.push({ event: e, col });
+    clusterEnd = Math.max(clusterEnd, e.end);
+  }
+  flushCluster();
+
+  return result;
 }
 
 function keyOf(d: Date): string {
