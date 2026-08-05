@@ -29,7 +29,6 @@ export default function ExpenseSheet({
       </p>
 
       <input
-        autoFocus
         type="number"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}

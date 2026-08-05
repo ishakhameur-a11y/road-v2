@@ -41,7 +41,6 @@ export default function TaskFormSheet({
       <h2 className="mb-5 text-center text-base font-bold">{sheetTitle}</h2>
 
       <input
-        autoFocus
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="ماذا تريد أن تنجز؟"

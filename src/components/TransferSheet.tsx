@@ -88,7 +88,6 @@ export default function TransferSheet({
             المبلغ الخارج ({fromAcc.currency === "DZD" ? "د.ج" : "$"})
           </p>
           <input
-            autoFocus
             type="number"
             value={fromAmount}
             onChange={(e) => setFromAmount(e.target.value)}

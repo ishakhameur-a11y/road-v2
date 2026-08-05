@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { Flame, CheckCircle2, Download, Upload, Sun, Moon, Clock } from "lucide-react";
+import { Flame, CheckCircle2, Download, Upload, Sun, Moon, Clock, ChevronDown } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useLocalStorage } from "@/lib/useLocalStorage";
 import { useTheme } from "@/lib/theme-context";
 import { TaskEvent, seedTasks } from "@/lib/tasks";
@@ -39,6 +40,7 @@ export default function MorePage() {
   const [events] = useLocalStorage<TaskEvent[]>("road_events", seedTasks());
   const [txs] = useLocalStorage<FinanceTx[]>("road_finance_txs", seedFinanceTxs());
   const [sessions, setSessions] = useSessions();
+  const [openSession, setOpenSession] = useState<Session["id"] | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -284,53 +286,84 @@ export default function MorePage() {
           <Clock size={16} color="var(--accent)" />
           <p className="text-sm font-bold">أوقات السشنز</p>
         </div>
-        <div className="flex flex-col gap-3">
-          {sessions.map((s) => (
-            <div key={s.id} className="rounded-xl p-3" style={{ backgroundColor: `${s.color}12` }}>
-              <p className="mb-2 text-xs font-bold" style={{ color: s.color }}>
-                {SESSION_LABELS[s.id]}
-              </p>
-              <div className="mb-2.5 grid grid-cols-2 gap-2">
-                <select
-                  value={s.start}
-                  onChange={(e) => updateSession(s.id, "start", Number(e.target.value))}
-                  className="rounded-lg border px-2 py-2 text-xs outline-none"
-                  style={{ borderColor: "var(--border)", backgroundColor: "var(--bg)", color: "var(--text)" }}
+        <div className="flex flex-col gap-2.5">
+          {sessions.map((s) => {
+            const isOpen = openSession === s.id;
+            return (
+              <div key={s.id} className="overflow-hidden rounded-xl" style={{ backgroundColor: `${s.color}12` }}>
+                <button
+                  onClick={() => setOpenSession(isOpen ? null : s.id)}
+                  className="flex w-full items-center justify-between px-3 py-3"
                 >
-                  {TIME_OPTIONS.map((x) => (
-                    <option key={x} value={x}>
-                      {mtl(x)}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={s.end}
-                  onChange={(e) => updateSession(s.id, "end", Number(e.target.value))}
-                  className="rounded-lg border px-2 py-2 text-xs outline-none"
-                  style={{ borderColor: "var(--border)", backgroundColor: "var(--bg)", color: "var(--text)" }}
-                >
-                  {TIME_OPTIONS.filter((x) => x > s.start).map((x) => (
-                    <option key={x} value={x}>
-                      {mtl(x)}
-                    </option>
-                  ))}
-                </select>
+                  <span className="text-xs font-bold" style={{ color: s.color }}>
+                    {SESSION_LABELS[s.id]}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+                      {mtl(s.start)} – {mtl(s.end)}
+                    </span>
+                    <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                      <ChevronDown size={15} color={s.color} />
+                    </motion.div>
+                  </div>
+                </button>
+
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.22 }}
+                      style={{ overflow: "hidden" }}
+                    >
+                      <div className="px-3 pb-3">
+                        <div className="mb-2.5 grid grid-cols-2 gap-2">
+                          <select
+                            value={s.start}
+                            onChange={(e) => updateSession(s.id, "start", Number(e.target.value))}
+                            className="rounded-lg border px-2 py-2 text-xs outline-none"
+                            style={{ borderColor: "var(--border)", backgroundColor: "var(--bg)", color: "var(--text)" }}
+                          >
+                            {TIME_OPTIONS.map((x) => (
+                              <option key={x} value={x}>
+                                {mtl(x)}
+                              </option>
+                            ))}
+                          </select>
+                          <select
+                            value={s.end}
+                            onChange={(e) => updateSession(s.id, "end", Number(e.target.value))}
+                            className="rounded-lg border px-2 py-2 text-xs outline-none"
+                            style={{ borderColor: "var(--border)", backgroundColor: "var(--bg)", color: "var(--text)" }}
+                          >
+                            {TIME_OPTIONS.filter((x) => x > s.start).map((x) => (
+                              <option key={x} value={x}>
+                                {mtl(x)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="flex gap-2">
+                          {SESSION_COLOR_PRESETS.map((c) => (
+                            <button
+                              key={c}
+                              onClick={() => updateSessionColor(s.id, c)}
+                              className="h-6 w-6 flex-shrink-0 rounded-full"
+                              style={{
+                                backgroundColor: c,
+                                boxShadow: s.color === c ? "0 0 0 2px var(--bg-elevated), 0 0 0 3.5px " + c : "none",
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-              <div className="flex gap-2">
-                {SESSION_COLOR_PRESETS.map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => updateSessionColor(s.id, c)}
-                    className="h-6 w-6 flex-shrink-0 rounded-full"
-                    style={{
-                      backgroundColor: c,
-                      boxShadow: s.color === c ? "0 0 0 2px var(--bg-elevated), 0 0 0 3.5px " + c : "none",
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

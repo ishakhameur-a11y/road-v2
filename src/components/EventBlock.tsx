@@ -25,7 +25,10 @@ export default function EventBlock({
 
   return (
     <button
-      onClick={onClick}
+      onClick={(ev) => {
+        ev.stopPropagation();
+        onClick();
+      }}
       style={{
         position: "absolute",
         top,
