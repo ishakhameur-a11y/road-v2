@@ -41,6 +41,7 @@ export default function MorePage() {
   const [txs] = useLocalStorage<FinanceTx[]>("road_finance_txs", seedFinanceTxs());
   const [sessions, setSessions] = useSessions();
   const [openSession, setOpenSession] = useState<Session["id"] | null>(null);
+  const [weekMenuOpen, setWeekMenuOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -51,17 +52,37 @@ export default function MorePage() {
 
   const tasksDone = events.filter((e) => e.status === "done").length;
 
+  const weeksList = useMemo(() => {
+    const dates = events.map((e) => {
+      const [y, m, d] = e.dateKey.split("-").map(Number);
+      return new Date(y, m - 1, d);
+    });
+    const today = new Date();
+    const earliest = dates.length > 0 ? new Date(Math.min(...dates.map((d) => d.getTime()))) : today;
+    const earliestWeekStart = startOfWeekSat(earliest);
+    const currentWeekStart = startOfWeekSat(today);
+    const totalWeeks =
+      Math.round((currentWeekStart.getTime() - earliestWeekStart.getTime()) / (7 * 86400000)) + 1;
+    return Array.from({ length: Math.max(totalWeeks, 1) }, (_, i) => ({
+      index: i + 1,
+      start: addDays(earliestWeekStart, i * 7),
+    }));
+  }, [events]);
+
+  const [weekIndex, setWeekIndex] = useState<number | null>(null);
+  const activeWeekIndex = weekIndex ?? weeksList.length;
+  const activeWeekStart = weeksList[activeWeekIndex - 1]?.start ?? startOfWeekSat(new Date());
+
   const weekly = useMemo(() => {
-    const start = startOfWeekSat(new Date());
     return Array.from({ length: 7 }, (_, i) => {
-      const d = addDays(start, i);
+      const d = addDays(activeWeekStart, i);
       const key = toKey(d);
       const dayEvents = events.filter((e) => e.dateKey === key);
       if (dayEvents.length === 0) return { pct: 0, day: d };
       const done = dayEvents.filter((e) => e.status === "done").length;
       return { pct: Math.round((done / dayEvents.length) * 100), day: d };
     });
-  }, [events]);
+  }, [events, activeWeekStart]);
   const avg = Math.round(weekly.reduce((s, v) => s + v.pct, 0) / 7);
 
   const financeTrend = useMemo(() => {
@@ -169,7 +190,54 @@ export default function MorePage() {
         className="mb-5 rounded-2xl border p-4"
         style={{ backgroundColor: "var(--bg-elevated)", borderColor: "var(--border)" }}
       >
-        <p className="mb-3 text-sm font-bold">إنتاجية هذا الأسبوع</p>
+        <div className="relative mb-3 flex items-center justify-between">
+          <p className="text-sm font-bold">
+            إنتاجية {activeWeekIndex === weeksList.length ? "هذا الأسبوع" : `الأسبوع ${activeWeekIndex}`}
+          </p>
+          <button
+            onClick={() => setWeekMenuOpen((o) => !o)}
+            className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs"
+            style={{ color: "var(--text-muted)" }}
+          >
+            {avg}%
+            <ChevronDown
+              size={14}
+              style={{ transform: weekMenuOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}
+            />
+          </button>
+
+          {weekMenuOpen && (
+            <>
+              <div className="fixed inset-0 z-30" onClick={() => setWeekMenuOpen(false)} />
+              <div
+                className="absolute left-0 top-8 z-40 max-h-52 w-32 overflow-y-auto rounded-xl border"
+                style={{
+                  borderColor: "var(--border)",
+                  backgroundColor: "var(--bg-elevated)",
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
+                }}
+              >
+                {weeksList.map((w) => (
+                  <button
+                    key={w.index}
+                    onClick={() => {
+                      setWeekIndex(w.index);
+                      setWeekMenuOpen(false);
+                    }}
+                    className="block w-full px-3 py-2.5 text-start text-xs font-semibold"
+                    style={{
+                      backgroundColor:
+                        activeWeekIndex === w.index ? "color-mix(in srgb, var(--accent) 12%, transparent)" : "transparent",
+                      color: activeWeekIndex === w.index ? "var(--accent)" : "var(--text)",
+                    }}
+                  >
+                    {w.index === weeksList.length ? "الأسبوع الحالي" : `أسبوع ${w.index}`}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
         <div className="flex h-24 items-end gap-2">
           {weekly.map((w, i) => (
             <div key={i} className="flex flex-1 flex-col items-center gap-1.5">
