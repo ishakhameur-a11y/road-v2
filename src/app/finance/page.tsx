@@ -146,10 +146,11 @@ export default function FinancePage() {
               color = "#1f9d6b";
             } else if (tx.type === "expense") {
               const cat = EXPENSE_CATEGORIES.find((c) => c.id === tx.category);
+              const acc = ACCOUNTS.find((a) => a.id === tx.account)!;
               icon = cat?.icon || "💸";
               title = tx.note || cat?.label || "مصروف";
-              sub = `${cat?.label} · ${tx.date}`;
-              amountLabel = `-${fmt(tx.amount)} د.ج`;
+              sub = `${cat?.label} · ${acc.label} · ${tx.date}`;
+              amountLabel = `-${fmt(tx.amount)} ${acc.currency === "DZD" ? "د.ج" : "$"}`;
               color = "#c1504c";
             } else {
               const fromAcc = ACCOUNTS.find((a) => a.id === tx.fromAccount)!;
@@ -203,6 +204,7 @@ export default function FinancePage() {
         {sheet === "expense" && (
           <ExpenseSheet
             spendPool={state.spendPool}
+            visaBalance={state.visa}
             onClose={() => setSheet(null)}
             onSave={(amount, account, category, note) =>
               addTx({ id: `f${Date.now()}`, type: "expense", date: new Date().toISOString().slice(0, 10), amount, account, category, note })

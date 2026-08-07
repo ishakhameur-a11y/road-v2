@@ -25,7 +25,7 @@ export const EXPENSE_CATEGORIES = [
 
 export type FinanceTx =
   | { id: string; type: "income"; date: string; amount: number; note: string }
-  | { id: string; type: "expense"; date: string; amount: number; account: "cash" | "bank"; category: string; note: string }
+  | { id: string; type: "expense"; date: string; amount: number; account: AccountId; category: string; note: string }
   | {
       id: string;
       type: "transfer";
@@ -55,7 +55,7 @@ export function computeState(txs: FinanceTx[]): FinanceState {
       s.investPool += tx.amount / 2;
     } else if (tx.type === "expense") {
       s[tx.account] -= tx.amount;
-      s.spendPool -= tx.amount;
+      if (tx.account !== "visa") s.spendPool -= tx.amount;
     } else if (tx.type === "transfer") {
       s[tx.fromAccount] -= tx.fromAmount;
       s[tx.toAccount] += tx.toAmount;

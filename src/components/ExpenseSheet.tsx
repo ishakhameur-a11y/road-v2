@@ -2,30 +2,44 @@
 
 import { useState } from "react";
 import Sheet from "./Sheet";
-import { EXPENSE_CATEGORIES } from "@/lib/finance";
+import { EXPENSE_CATEGORIES, ACCOUNTS, AccountId } from "@/lib/finance";
 
 export default function ExpenseSheet({
   spendPool,
+  visaBalance,
   onClose,
   onSave,
 }: {
   spendPool: number;
+  visaBalance: number;
   onClose: () => void;
-  onSave: (amount: number, account: "cash" | "bank", category: string, note: string) => void;
+  onSave: (amount: number, account: AccountId, category: string, note: string) => void;
 }) {
   const [amount, setAmount] = useState("");
-  const [account, setAccount] = useState<"cash" | "bank">("cash");
+  const [account, setAccount] = useState<AccountId>("cash");
   const [category, setCategory] = useState("food");
   const [note, setNote] = useState("");
   const num = Number(amount) || 0;
+  const isVisa = account === "visa";
 
   return (
     <Sheet title="إضافة مصروف" onClose={onClose}>
       <p className="mb-3 text-center text-xs" style={{ color: "var(--text-muted)" }}>
-        المتاح للصرف حاليًا:{" "}
-        <span className="font-bold" style={{ color: "var(--accent)" }}>
-          {spendPool.toLocaleString()} د.ج
-        </span>
+        {isVisa ? (
+          <>
+            رصيد الفيزا الحالي:{" "}
+            <span className="font-bold" style={{ color: "var(--accent)" }}>
+              {visaBalance.toLocaleString()} $
+            </span>
+          </>
+        ) : (
+          <>
+            المتاح للصرف حاليًا:{" "}
+            <span className="font-bold" style={{ color: "var(--accent)" }}>
+              {spendPool.toLocaleString()} د.ج
+            </span>
+          </>
+        )}
       </p>
 
       <input
@@ -42,21 +56,27 @@ export default function ExpenseSheet({
         من حساب
       </p>
       <div className="mb-4 flex gap-2">
-        {(["cash", "bank"] as const).map((a) => (
+        {ACCOUNTS.map((a) => (
           <button
-            key={a}
-            onClick={() => setAccount(a)}
+            key={a.id}
+            onClick={() => setAccount(a.id)}
             className="flex-1 rounded-xl border py-2.5 text-sm font-semibold"
             style={{
-              borderColor: account === a ? "var(--accent)" : "var(--border)",
-              backgroundColor: account === a ? "color-mix(in srgb, var(--accent) 12%, transparent)" : "var(--bg)",
-              color: account === a ? "var(--accent)" : "var(--text)",
+              borderColor: account === a.id ? "var(--accent)" : "var(--border)",
+              backgroundColor: account === a.id ? "color-mix(in srgb, var(--accent) 12%, transparent)" : "var(--bg)",
+              color: account === a.id ? "var(--accent)" : "var(--text)",
             }}
           >
-            {a === "cash" ? "💵 كاش" : "🏦 بنك"}
+            {a.icon} {a.label}
           </button>
         ))}
       </div>
+
+      {isVisa && (
+        <p className="mb-4 -mt-2 text-[11px]" style={{ color: "var(--text-muted)" }}>
+          هذا المصروف بالدولار، وما يأثر على "متاح للصرف" بالدينار.
+        </p>
+      )}
 
       <p className="mb-2 text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
         الفئة
